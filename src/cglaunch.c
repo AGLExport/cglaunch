@@ -51,13 +51,14 @@ int main(int argc, char *argv[])
 	//#ifdef _PRINTF_DEBUG_
 	fprintf(stderr, "cgroup_add_controller return = %p\n",memory_controller);
 	//#endif
-	ret = cgroup_add_value_int64 (memory_controller, "memory.limit_in_bytes", (10LL * 1024LL * 1024LL));
+	ret = cgroup_add_value_int64 (memory_controller, "memory.limit_in_bytes", (30LL * 1024LL * 1024LL));
 	//#ifdef _PRINTF_DEBUG_
 	fprintf(stderr, "cgroup_add_value_int64 return = %d\n",ret);
 	//#endif
 
 	ret = cgroup_add_value_int64 (memory_controller, "tasks", getpid());
 	//#ifdef _PRINTF_DEBUG_
+	fprintf(stderr, "pid = %d\n",getpid());
 	fprintf(stderr, "cgroup_add_value_int64 return = %d\n",ret);
 	//#endif
 
@@ -71,7 +72,8 @@ int main(int argc, char *argv[])
 
 	cgroup_free(&newgroup);
 
-	memory_over_injection();
+	(void) execlp("./test/injector/memory_injector", "./test/injector/memory_injector", (char*)NULL);
+
 
 	return result;
 }
