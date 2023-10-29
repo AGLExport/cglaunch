@@ -5,6 +5,7 @@ bin_PROGRAMS = cglaunch
 
 cglaunch_SOURCES = \
 	cglaunch-config.c \
+	cglaunch-cgroup.c \
 	cglaunch.c
 
 # options
@@ -45,8 +46,8 @@ if ENABLE_GCOV
 CFLAGS   += -coverage
 endif
 
-cglaunch_CFLAGS   += -DCM_CRITICAL_ERROR_OUT_STDERROR
-cglaunch_CXXFLAGS += -DCM_CRITICAL_ERROR_OUT_STDERROR
+cglaunch_CFLAGS   += -D_CRITICAL_ERROR_OUT_STDERROR
+cglaunch_CXXFLAGS += -D_CRITICAL_ERROR_OUT_STDERROR
 
 if ENABLE_PRINTFDEBUG
 cglaunch_CFLAGS   += -D_PRINTF_DEBUG_

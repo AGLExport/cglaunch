@@ -25,4 +25,5 @@ typedef struct s_cglaunch_config cglaunch_config_t;
 
 
 int cglaunch_get_config(const char *config_file, cglaunch_config_t *cgconf);
+int cglaunch_setup_cgroup(const cglaunch_config_t *cgconf);
 #endif	//#ifndef CGLAUNCH_H
