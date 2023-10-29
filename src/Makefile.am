@@ -6,10 +6,10 @@ bin_PROGRAMS = cglaunch
 cglaunch_SOURCES = \
 	cglaunch.c
 
-
 # options
 # Additional library
 cglaunch_LDADD = \
+	$(top_srcdir)/3rdparty/tomlc99/libtomlc99_3rdparty.a \
 	-lrt -lpthread \
 	@LIBCGROUP_LIBS@ \
 	@LIBCAP_LIBS@
@@ -18,6 +18,7 @@ cglaunch_LDADD = \
 cglaunch_CFLAGS = \
 	-g -Wall -Wno-unused-but-set-variable \
 	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/3rdparty/tomlc99 \
 	@LIBCGROUP_CFLAGS@ \
 	@LIBCAP_CFLAGS@ \
 	-D_GNU_SOURCE

@@ -65,6 +65,7 @@ PKG_CHECK_MODULES([GMOCK_MAIN], [gmock_main], , enable_test=no)
 
 AC_CONFIG_FILES([Makefile
 				src/Makefile
+        3rdparty/tomlc99/Makefile
         test/injector/Makefile
 				test/unit/Makefile ])
 AC_OUTPUT
