@@ -4,6 +4,7 @@ ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 bin_PROGRAMS = cglaunch
 
 cglaunch_SOURCES = \
+	cglaunch-config.c \
 	cglaunch.c
 
 # options
