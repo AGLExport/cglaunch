@@ -12,20 +12,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <libcgroup.h>
+#include "cglaunch.h"
 
-void memory_over_injection()
-{
-	void * p = NULL;
-	const size_t injection_size = 1*1024*1024;
 
-	for(int i=0; i < 100;i++) {
-		p = malloc(injection_size);
-		memset(p,0xff,injection_size);
-		fprintf(stderr,"do injection %d\n",i);
-		sleep(1);
-	}
-}
+static const char g_test_config_file[] = "./test/config/memory-test.toml";
 
 /**
  * The main function for cglauncher.
@@ -33,47 +23,32 @@ void memory_over_injection()
 int main(int argc, char *argv[])
 {
 	int ret = -1;
-	int result = 0;
-	struct cgroup *newgroup = NULL;
-	struct cgroup_controller *memory_controller = NULL;
+	int result = 1;
+	const char *config_file = NULL;
+	cglaunch_config_t cgconf;
 
-	ret = cgroup_init();
-	//#ifdef _PRINTF_DEBUG_
-	fprintf(stderr, "cgroup_init return = %d\n",ret);
-	//#endif
 
-	newgroup = cgroup_new_cgroup("test-cglaunch");
-	//#ifdef _PRINTF_DEBUG_
-	fprintf(stderr, "cgroup_new_cgroup return = %p\n",newgroup);
-	//#endif
+	config_file = g_test_config_file;
+	(void) memset(&cgconf, 0, sizeof(cgconf));
 
-	memory_controller = cgroup_add_controller(newgroup, "memory");
-	//#ifdef _PRINTF_DEBUG_
-	fprintf(stderr, "cgroup_add_controller return = %p\n",memory_controller);
-	//#endif
-	ret = cgroup_add_value_int64 (memory_controller, "memory.limit_in_bytes", (30LL * 1024LL * 1024LL));
-	//#ifdef _PRINTF_DEBUG_
-	fprintf(stderr, "cgroup_add_value_int64 return = %d\n",ret);
-	//#endif
-
-	ret = cgroup_add_value_int64 (memory_controller, "tasks", getpid());
-	//#ifdef _PRINTF_DEBUG_
-	fprintf(stderr, "pid = %d\n",getpid());
-	fprintf(stderr, "cgroup_add_value_int64 return = %d\n",ret);
-	//#endif
-
-	ret = cgroup_create_cgroup(newgroup, 0);
-	//#ifdef _PRINTF_DEBUG_
-	fprintf(stderr, "cgroup_create_cgroup return = %d\n",ret);
-	if (ret != 0) {
-		fprintf(stderr, "cgroup error : %s\n", cgroup_strerror(cgroup_get_last_errno()));
+	ret = cglaunch_get_config(config_file, &cgconf);
+	if (ret < 0) {
+		#ifdef _CRITICAL_ERROR_OUT_STDERROR
+		fprintf(stderr, "Fail to read config file at %s\n", config_file);
+		#endif
+		goto do_return;
 	}
-	//#endif
 
-	cgroup_free(&newgroup);
+	ret = cglaunch_setup_cgroup(&cgconf);
+	if (ret < 0) {
+		#ifdef _CRITICAL_ERROR_OUT_STDERROR
+		fprintf(stderr, "Fail to setup cgroup\n");
+		#endif
+		goto do_return;
+	}
 
 	(void) execlp("./test/injector/memory_injector", "./test/injector/memory_injector", (char*)NULL);
 
-
+do_return:
 	return result;
 }

@@ -1,0 +1,10 @@
+[exec]
+    command-line = "./test/injector/memory_injector -T -P -D"
+
+[cgroup]
+    group-name = "cglaunch"
+    memory-limit-mb = 50
+    cpu-core-limit = "3"
+
+[capability]
+    drop = ["a","b","c"]
