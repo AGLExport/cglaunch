@@ -88,6 +88,14 @@ int cglaunch_setup_cgroup(const cglaunch_config_t *cgconf)
 			goto do_return;
 		}
 
+		// Must be set default memory node in embedded.
+		ret = cgroup_add_value_int64(cpuset_controller, "cpuset.mems", 0LL);
+		if (ret != 0) {
+			// Fail to set value to cpuset.mems.
+			result = -2;
+			goto do_return;
+		}
+
 		ret = cgroup_add_value_string(cpuset_controller, "cpuset.cpus", cgconf->cpuset_cpus);
 		if (ret != 0) {
 			// Fail to set value to cpuset.cpus.
