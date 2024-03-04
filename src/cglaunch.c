@@ -27,8 +27,23 @@ int main(int argc, char *argv[])
 	const char *config_file = NULL;
 	cglaunch_config_t cgconf;
 
+	if (argc != 2) {
+		#ifdef _CRITICAL_ERROR_OUT_STDERROR
+		fprintf(stderr, "Must be set config file at 1st arg.\n");
+		#endif
+		goto do_return;
+	}
 
-	config_file = g_test_config_file;
+	config_file = strstr(argv[1],".toml");
+	if (config_file == NULL) {
+		#ifdef _CRITICAL_ERROR_OUT_STDERROR
+		fprintf(stderr, "Must be set toml config file at 1st arg.\n");
+		#endif
+		goto do_return;
+	}
+	config_file = argv[1];
+
+	//config_file = g_test_config_file;
 	(void) memset(&cgconf, 0, sizeof(cgconf));
 
 	ret = cglaunch_get_config(config_file, &cgconf);
