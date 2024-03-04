@@ -1,8 +1,10 @@
 [exec]
     command-line = "./test/injector/memory_injector -T -P -D"
+    delay-ms = 5000
 
 [cgroup]
     group-name = "cglaunch"
+    role ="master"
     memory-limit-mb = 50
     cpu-core-limit = "3"
 

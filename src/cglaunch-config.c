@@ -70,26 +70,56 @@ static int cglaunch_get_config_exec(const toml_table_t *toml_conf, cglaunch_conf
 		goto do_return;
 	}
 
-	cmdline = toml_string_in(exec, "command-line");
-	if (cmdline.ok == 0) {
-		#ifdef _PRINTF_DEBUG_
-		fprintf(stderr, "Can't get command-line from toml file.\n");
-		#endif
-		result = -2;
-		goto do_return;
+	// Get a command line for launch
+	{
+		cmdline = toml_string_in(exec, "command-line");
+		if (cmdline.ok == 0) {
+			#ifdef _PRINTF_DEBUG_
+			fprintf(stderr, "Can't get command-line from toml file.\n");
+			#endif
+			result = -2;
+			goto do_return;
+		}
+
+		length = strlen(cmdline.u.s);
+		if (length >= sizeof(cgconf->execute_cmdlile)){
+			// A command line is too long.
+			result = -2;
+			(void) free(cmdline.u.s);
+			goto do_return;
+		}
+
+		(void) strncpy(cgconf->execute_cmdlile, cmdline.u.s, (sizeof(cgconf->execute_cmdlile) - 1UL));
+		(void) free(cmdline.u.s);
 	}
 
-	length = strlen(cmdline.u.s);
-	if (length >= sizeof(cgconf->execute_cmdlile)){
-		// A command line is too long.
-		result = -2;
-		goto do_return;
-	}
+	// Get a launch delay setting.
+	{
+		toml_datum_t launch_delay;
+		(void) memset(&launch_delay, 0, sizeof(launch_delay));
 
-	(void) strncpy(cgconf->execute_cmdlile, cmdline.u.s, (sizeof(cgconf->execute_cmdlile) - 1UL));
+		launch_delay = toml_int_in(exec, "delay-ms");
+		if (launch_delay.ok == 0) {
+			#ifdef _PRINTF_DEBUG_
+			fprintf(stderr, "Can't get delay from toml file. Disable.\n");
+			#endif
+			cgconf->exec_delay_ns = 0;
+		} else {
+			if (launch_delay.u.i <= 0) {
+				// Out of range, set 0 that mean is disable setting.
+				cgconf->exec_delay_ns = 0;
+			} else {
+				if (launch_delay.u.i >= INT32_MAX) {
+					// Too large delay time, set 0 that mean is disable setting.
+					cgconf->exec_delay_ns = 0;
+				} else {
+					cgconf->exec_delay_ns = launch_delay.u.i * 1024LL * 1024LL;
+				}
+			}
+		}
+	}
 
 do_return:
-	(void) free(cmdline.u.s);
 
 	return result;
 }
@@ -147,6 +177,29 @@ static int cglaunch_get_config_cgroup(const toml_table_t *toml_conf, cglaunch_co
 		}
 	}
 
+	// Get a role
+	{
+		toml_datum_t cg_role;
+		(void) memset(&cg_role, 0, sizeof(cg_role));
+
+		cg_role = toml_string_in(cgroup, "role");
+		if (cg_role.ok == 0) {
+			// No role setting, must set role.
+			result = -2;
+			goto do_return;
+		} else {
+			if (strcmp(cg_role.u.s,"master") == 0) {
+				// Set a Master role
+				cgconf->cgrole = CGLAUNCH_ROLE_MASTER;
+			} else {
+				// Set a Slave role
+				cgconf->cgrole = CGLAUNCH_ROLE_SLAVE;
+			}
+
+			(void) free(cg_role.u.s);
+		}
+	}
+
 	// Get a memory limit setting.
 	{
 		toml_datum_t mem_limit;
@@ -160,14 +213,12 @@ static int cglaunch_get_config_cgroup(const toml_table_t *toml_conf, cglaunch_co
 			cgconf->enable_memory_limit = 0;
 		} else {
 			if (mem_limit.u.i <= 0) {
-				// Out of range, set -1 that mean is disable setting.
-				result = -2;
-				goto do_return;
+				// Out of range, set 0 that mean is disable setting.
+				cgconf->enable_memory_limit = 0;
 			} else {
 				if (mem_limit.u.i >= (INT64_MAX/1024/1024)) {
-					// Size over, set -1 that mean is disable setting.
-					result = -2;
-					goto do_return;
+					// Size over, set 0 that mean is disable setting.
+					cgconf->enable_memory_limit = 0;
 				} else {
 					cgconf->memory_limit_byte = mem_limit.u.i * 1024LL * 1024LL;
 					cgconf->enable_memory_limit = 1;
